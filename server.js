@@ -1,6 +1,6 @@
 const path = require('path');
 const http = require('http');
-const express= require('express');
+const express = require('express');
 const socketio = require('socket.io');
 const formatMessage = require('./utils/messages');
 const { userJoin, getCurrentUser, userLeave, getRoomUsers } = require('./utils/users');
@@ -29,7 +29,7 @@ io.on('connection', socket => {
 
         // Send users and room info
         io.to(user.room).emit('roomUsers', {
-            riin: user.room,
+            room: user.room,
             users: getRoomUsers(user.room)
         });
     });
@@ -50,7 +50,7 @@ io.on('connection', socket => {
 
             // Send users and room info
             io.to(user.room).emit('roomUsers', {
-                riin: user.room,
+                room: user.room,
                 users: getRoomUsers(user.room)
             });
         }
