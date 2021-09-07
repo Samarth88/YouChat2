@@ -1,61 +1,209 @@
 const path = require('path');
 const http = require('http');
+const fs = require('fs');
 const express = require('express');
+const expressLayouts = require('express-ejs-layouts');
+const mongoose = require('mongoose');
 const socketio = require('socket.io');
-const formatMessage = require('./utils/messages');
-const { userJoin, getCurrentUser, userLeave, getRoomUsers } = require('./utils/users');
+const passport = require('passport');
+const flash = require('connect-flash');
+const session = require('express-session');
+const bcrypt = require('bcryptjs');
+const MongoStore = require('connect-mongo');
+const morgan = require('morgan');
+const { ensureAuthenticated, forwardAuthenticated} = require('./configure/auth');
+
+require('dotenv').config();
+
+// Models
+const User = require('./models/User');
+const Room = require('./models/Room');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
+app.io=io;
 
 //set static folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-const botName = 'YouChat Bot';
+// Morgan
+app.use(morgan('dev'));
 
-// run when a client connects
+// Passport Config
+require('./configure/passport')(passport);
+
+// DB Config
+const db = process.env.MONGO_URI;
+
+// Connect mongodb
+mongoose.connect(db, { useNewUrlParser: true, useUnifiedTopology: true }).then(() => {
+    console.log('connected db');
+}).catch(err => console.log(err));
+
+
+// EJS
+app.use(expressLayouts);
+app.set('view engine', 'ejs');
+app.set("layout extractScripts", true)
+app.set("layout extractStyles", true)
+
+
+// Express body parser
+app.use(express.urlencoded({ extended: true }));
+
+// Express session
+app.use(
+    session({
+        secret: 'secret',
+        resave: true,
+        saveUninitialized: true,
+        store: MongoStore.create({ mongoUrl: db })
+    })
+);  
+
+// Passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Connect flash
+app.use(flash());
+
+// Global variables
+app.use(function (req, res, next) {
+    res.locals.success_msg = req.flash('success_msg');
+    res.locals.error_msg = req.flash('error_msg');
+    res.locals.error = req.flash('error');
+    next();
+});
+
+// Routes
+app.use('/', require('./routes/index.js'));
+app.use('/users', require('./routes/users.js'));
+
+//const botName = 'YouChat Bot';
+
+// Socket io
+const onlineUsers = {};
+
 io.on('connection', socket => {
-    socket.on('joinRoom', ({ username, room }) => {
-        const user = userJoin(socket.id, username, room);
+    socket.on('joinRooms', data => {
+        if( onlineUsers[data.userId] )
+            onlineUsers[data.userId].push(socket.id);
+        else
+            onlineUsers[data.userId] = [socket.id];
+      
+        console.log('online',onlineUsers);
+  
+        userToSend = {};
+        data.rooms.forEach(room => {
+            socket.join(room.id);
         
-        socket.join(user.room);
-
-        // Welcome current user
-        socket.emit('message', formatMessage(botName, `Welcome to ${room}`));
-
-        // Broadcast when a user connects
-        socket.broadcast.to(user.room).emit('message', formatMessage(botName, `${user.username} has joined the chat`));
-
-        // Send users and room info
-        io.to(user.room).emit('roomUsers', {
-            room: user.room,
-            users: getRoomUsers(user.room)
+            room.users.forEach( user => {
+            if( onlineUsers[user] )
+                userToSend[user] = 1;
+            else
+                userToSend[user] = 0;
+        })
+  
+            setTimeout(() => {
+                socket.broadcast.to(room.id).emit('online' , { userId: data.userId});
+            }, 1500);
         });
+  
+        socket.emit('online-users' , {onlineUsers: userToSend});
+        // console.log('usertoSend',userToSend);
     });
-
-    // Listen for chat message
-    socket.on('chatMessage', (msg) => {
-        const user = getCurrentUser(socket.id);
-
-        io.to(user.room).emit('message', formatMessage(user.username, msg));
+  
+    socket.on('leave-room' , data => {
+  
+        Room.updateOne({ _id: data.room },
+            { $pull: { users: data.id } }, function (err, docs) {
+            if (err) {
+                console.log(err)
+            }
+            else {
+                // console.log("Updated Docs : ", docs);
+            }
+        });
+  
+        newMessage = {  msg: `${data.name} left`,
+                        userSent: 'bot',
+                        Date : new Date()
+                    }
+      
+        Room.updateOne({ _id: data.room },
+            {$push:  { messages: newMessage} 
+            }, function (err, docs) {
+            if (err) {
+                console.log(err)
+            }
+            else {
+                // console.log("Updated Docs : ", docs);
+            }
+        });
+  
+    User.updateOne({_id: data.id},
+        {$pull: { rooms: data.room}},
+        (err, docs) => {
+            if (err) {
+                console.log(err)
+            }
+            else {
+                // console.log("Updated Docs : ", docs);
+            }
     });
-
-    // Runs when client disconnects
-    socket.on('disconnect', () => {
-        const user = userLeave(socket.id);
-        
-        if(user) {
-            io.to(user.room).emit('message', formatMessage(botName, `${user.username} has left the chat`));
-
-            // Send users and room info
-            io.to(user.room).emit('roomUsers', {
-                room: user.room,
-                users: getRoomUsers(user.room)
-            });
+  
+    data.Date = newMessage.Date;
+    socket.broadcast.to(data.room).emit('user-left' , data);
+    console.log(`${data.name} left ${data.room}`);
+})
+  
+    socket.on('sent-message' , (data) => {
+  
+        Room.updateOne({ _id: data.room },
+        { $push: { messages: data.message } }, function (err, docs) {
+            if (err) {
+                console.log(err)
+            }
+            else {
+                // console.log("Updated Docs : ", docs);
+            }
+        });
+  
+        socket.broadcast.to(data.room).emit('message' , data);
+  
+    });
+  
+    socket.on('disconnect', () =>{
+        var keys = Object.keys(onlineUsers)
+  
+        for(key in keys){
+            // console.log(key, onlineUsers[keys[key]]);
+            const index = onlineUsers[keys[key]].indexOf(socket.id);
+            if (index > -1) {
+                onlineUsers[keys[key]].splice(index, 1);
+  
+                if( onlineUsers[keys[key]].length == 0 )
+                {
+                    User.findById(keys[key] , (err,user) => {
+                    if(err) throw err;
+  
+                    if(user)
+                    {
+                        user.rooms.forEach( room => {
+                            io.to(room).emit('offline', user.id);
+                        })
+                    }
+                    })
+                    delete onlineUsers[keys[key]];
+                }
+                break;
+            }
         }
-        
-    });
+  
+         // console.log('offline',onlineUsers);
+    })
 });
 
 

@@ -1,0 +1,287 @@
+<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css"> -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="/dashboard.css">
+
+<%function formatDate(d,position='message'){
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun","Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const today = new Date();
+
+    var ampm;
+    var hours = d.getHours();
+
+    if( hours > 12 ){
+        ampm = 'PM';
+        hours = hours-12;
+    }else{
+        ampm = 'AM';
+    }
+
+    hours = ("0" + hours).slice(-2);
+
+    if( position == 'message')
+        return String(hours) + ':' + String(("0" + d.getMinutes()).slice(-2)) + ' ' + ampm + ' | ' + String(monthNames[d.getMonth()]) + ' ' + String(d.getDate()) + ',' + String(d.getFullYear());
+
+    if( d.getFullYear() == today.getFullYear() && d.getMonth() == today.getMonth() )
+    {
+        if( d.getDate() == today.getDate() )
+            return String(hours) + ':' + String(("0" + d.getMinutes()).slice(-2)) + ' ' + ampm;
+        else if(d.getDate() + 1  == today.getDate())
+            return 'yesterday';
+        else 
+            return  String(d.getDate()) + '/' + String(d.getMonth()+1) + '/' + String(d.getFullYear())
+    }
+} %> 
+
+<% function shortenMessage(str){
+    if( str.length > 40 )
+        str = str.substring(0,40);
+
+    str = str+'....'
+    return str;
+} %> 
+
+<div class="container mt-5 px-4">
+    <div class="row rounded-lg overflow-hidden shadow">
+        <!-- Users box-->
+        <div class="col-5 px-0">
+            <div style="height: 100%;" class="bg-white">
+
+                <div style="display: flex; justify-content: space-between;" class="bg-gray px-4 py-2 bg-light">
+                    <button style="padding: 0; box-shadow: none;" class="btn" onclick="cancelEdit()" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample2" aria-controls="offcanvasExample2">
+                        <div style="display: flex;align-items: center;">
+                            <p class="h5 ml-3 mb-0 py-1"><%= user.name %></p>
+                        </div>
+                    </button>
+                    <div style="margin-top: 4px;" class="dropdown">
+                        <a  type="text" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i style="width: 30px; text-align: center;" class="fa fa-ellipsis-h" aria-hidden="true"></i>
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                          <li><a class="dropdown-item" href="/joinroom">Join Room</a></li>
+                          <li><a class="dropdown-item" href="/createroom">Create Room</a></li>
+                          <li><a class="dropdown-item" href="/users/logout">Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div style="display: none;" id="noRoomMessage">
+                    <p style="text-align: center;margin: 10px 2px;color: gray;">Room List empty.</p>
+                </div>
+
+                <div class="messages-box">
+                    <div class="list-group rounded-0">
+                        <% rooms.forEach(room => { %>
+                            <% messages = room.messages %> 
+                                <% lastMessage = messages.slice(-1)[0] %>
+                                <% if( lastMessage.userSent != 'bot' ){ %> 
+                                    <div id="<%= room.id %>">
+                                        <a href="#" class="list-group-item list-group-item-action list-group-item-light rounded-0">
+                                            <div class="media">
+
+                                                <div class="media-body ml-4">
+                                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                                        <h5 class="mb-0"><%=room.name%></h5><small class="small"><%= formatDate(lastMessage.Date,'roomlist') %> </small>
+                                                    </div>
+                                                    <p class="text-muted mb-0 text-small"><%= shortenMessage(userInfo[lastMessage.userSent].name + ': ' + lastMessage.msg)%> </p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                <% }else{ %>
+                                    <div id="<%= room.id %>">
+                                        <a href="#" class="list-group-item list-group-item-action list-group-item-light rounded-0">
+                                            <div class="media">
+
+                                                <div class="media-body ml-4">
+                                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                                        <h5 class="mb-0"><%=room.name%></h5><small class="small"><%= formatDate(lastMessage.Date,'roomlist') %> </small>
+                                                    </div>
+                                                    <p class="text-muted mb-0 text-small"><%= shortenMessage(lastMessage.msg)%> </p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                <% } %> 
+                        <% }); %>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Box-->
+        <div style="padding-left: 4px;padding-right: 0px;" id="chatarea" class="col-7">
+
+            <div id="topBarChatBox" class="bg-gray px-4 py-2 bg-light" style="display: none;">
+                <button style="width: 100%;border: none;background: #f8f9fa !important;" type="button" onclick="cancelRoomEdit()" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample" aria-controls="offcanvasExample">
+                    <div style="display: flex;" id="roomNameContainer">
+
+                        <div style="margin-left: 15px;">
+                            <div style="text-align: left;" id="roomName" class="h5 mb-0" ></div>
+                            <small><span></span> member | <span></span> online</small>
+                        </div>
+                    </div>
+                </button>
+            </div>
+
+            <% rooms.forEach( room => { %>
+                <div style="display: none;" id="<%= room.id %>ChatBox"  class="px-4 py-4 chat-box bg-white">
+                    <% messages = room.messages %> 
+                    <% messages.forEach(message => { %>
+                        <% if( message.userSent == 'bot'){ %> 
+                            <div class="botMsgContainer">
+                                <p class="botMsg"><%= message.msg %></p>
+                            </div>
+                        <% }else if( message.userSent == user.id ) {%>
+                            <div class="media w-50 ml-auto mb-3"><div class="media-body"><div class="bg-primary rounded py-2 px-3 mb-2"><p class="text-small mb-0 text-white"><%= message.msg %> </p></div><p class="small text-muted"><%= formatDate(message.Date) %></p></div></div>
+                        <% }else{ %>
+                            <div class="media w-50 mb-3">
+                                
+                                <div class="media-body ml-3">
+                                    <p style="margin-bottom: 0;color: #3a6d99;"><%=userInfo[message.userSent].name%></p>
+                                    <div class="bg-light rounded py-2 px-3 mb-2">
+                                        <p class="text-small mb-0 text-muted"><%=message.msg%></p>
+                                    </div>
+                                    <p class="small text-muted"><%=formatDate(message.Date)%></p>
+                                </div>
+                            </div>
+                        <% } %> 
+                    <% }); %> 
+                </div>
+            <% }); %>  
+
+            <!-- Typing area -->
+            <form id="typingArea" style="display: none;" action="#" class="bg-light">
+                <div class="input-group">
+                    <input id="msg" type="text" placeholder="Type a message" aria-describedby="button-addon2"
+                        class="form-control rounded-0 border-0 py-4 bg-light">
+                    <div class="input-group-append">
+                        <button id="button-addon2" type="submit" class="btn btn-link"> <i
+                                class="fa fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </form>
+
+            <div id="startMessage" style="display:flex; background-color: white; height: 100%; align-items: center; justify-content: center;">
+                <p style="color: gray; font-size: large;">Please select a room to start chatting.</p>
+            </div>
+
+        </div>
+    </div>
+</div>
+  
+<!-- Right modal -->
+<div class="offcanvas offcanvas-end" data-bs-scroll="false" data-bs-backdrop="true" tabindex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasExampleLabel">Room Info</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close" onclick="cancelRoomEdit()"></button>
+    </div>
+    <div id="roomDescription" class="offcanvas-body">
+
+        <div>
+            <form id="roomNameForm" action="/users/updateRoomName" method="POST">
+                <input type="text" name="id" class="form-control" value="" hidden/>
+                <div class="form-group">
+                    <label style="color: rgb(0, 150, 0);" for="roomProfileName">
+                        Room Name
+                    </label>
+                    <div style="display: flex;align-items: center;">
+                        <input type="text" id="roomProfileName" name="roomProfileName" class="form-control" data-realname="" value="" onfocus="this.selectionStart = this.selectionEnd = this.value.length;" disabled/>
+                        <button id="saveRoomName" style="display: none;margin: auto;" type="submit" class="btn">
+                            <img style="width: 25px;" src="/check.png" alt="">
+                        </button>
+                        <button id="editRoomName" type="button" class="btn" onclick="editRoomProfileName()">
+                            <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="form-group">
+            <label style="color: rgb(0, 150, 0);" for="roomId">
+                Room Id
+            </label>
+                <input type="text" id="roomId" name="roomId" class="form-control" value="" disabled/>
+        </div>
+
+        <button id="leaveroom">
+            <i class="fa fa-sign-out fa-2x" aria-hidden="true" style="margin-right: 15px;"></i>
+            <span>Leave Room</span>
+        </button>
+        <div class="input-group" style="display: flex;align-items: center;background: #f8f9fa;padding-left: 10px;">
+            <i style="color: #6c757d;" class="fa fa-search" aria-hidden="true"></i>
+            <input type="text" id="myInput" onkeyup="myFunction()" placeholder="Search for members.." class="form-control rounded-0 border-0 py-4 bg-light">
+        </div>
+        <div style="width: 100%;">
+        <ul id="myUL" class="list-group list-group-flush">
+        </ul>
+        </div>
+
+    </div>
+</div>
+
+<!-- Left modal -->
+<div class="offcanvas offcanvas-start" data-bs-scroll="false" data-bs-backdrop="true" tabindex="-1" id="offcanvasExample2" aria-labelledby="offcanvasExample2Label">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasExample2Label">Profile</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close" onclick="cancelEdit()"></button>
+    </div>
+    <div class="offcanvas-body">
+
+        <div>
+            <form id="profileNameForm" action="/users/updateProfileName" method="POST">
+                <div class="form-group">
+                    <label style="color: rgb(0, 150, 0);" for="profileName">
+                        Your Name
+                    </label>
+                    <div style="display: flex;align-items: center;">
+                        <input type="text" id="profileName" name="profileName" class="form-control" value="<%= user.name %>" onfocus="this.selectionStart = this.selectionEnd = this.value.length;" disabled/>
+                        <button id="saveName" style="display: none;margin: auto;" type="submit" class="btn">
+                            <img style="width: 25px;" src="/check.png" alt="">
+                        </button>
+                        <button type="button" class="btn" id="editName" onclick="editProfileName()">
+                            <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="form-group">
+            <label style="color: rgb(0, 150, 0);" for="profileEmail">
+                Your Email
+            </label>
+            <input type="email" id="profileEmail" name="profileEmail" class="form-control" value="<%= user.email %>" disabled/>
+        </div>
+    </div>
+</div>
+
+
+<% var roomInfo = []%>
+<% rooms.forEach( room => { %>
+      <% roomInfo.push({id:room.id, name: room.name, users: room.users }); %>
+<% }) %>
+
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script> -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+    localStorage.setItem("user", '<%-JSON.stringify({name:user.name, email:user.email, id:user.id,rooms:roomInfo,userInfo:userInfo})%>')
+    user = JSON.parse(localStorage.getItem("user"));
+    topBarChatBox = document.getElementById('topBarChatBox');
+    typingArea = document.getElementById('typingArea');
+    startMessage = document.getElementById('startMessage');
+    roomName = document.getElementById('roomName');
+    onlineUsers = {};
+    var currentRoom = null;
+</script>
+
+<script src="/format.js"></script>
+<script src="/socket.js"></script>
+<script src="/main.js"></script>
