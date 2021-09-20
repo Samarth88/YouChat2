@@ -13,7 +13,7 @@ user.rooms.forEach(room => {
         currentRoom = room.id;
         console.log(currentRoom)
         topBarChatBox.style.display = 'flex';
-        //topBarChatBox.getElementsByTagName('img')[0].src = `/roomProfilePics/${room.id}`;
+        //
         typingArea.style.display = 'block';
         startMessage.style.display = 'none';
         roomDescription = document.getElementById('roomDescription');
@@ -37,12 +37,12 @@ user.rooms.forEach(room => {
 
         document.getElementById(room.id).getElementsByTagName('p')[0].classList.remove('text-muted');
 
-        //roomDescription.getElementsByTagName('img')[0].src = `/roomProfilePics/${room.id}`;
+        //
         document.getElementById('roomNameForm').getElementsByTagName('input')[1].value = room.name;
         document.getElementById('roomNameForm').getElementsByTagName('input')[1].dataset.realname = room.name;
         document.getElementById('roomId').value = room.id;
         document.getElementById('roomNameForm').getElementsByTagName('input')[0].value = room.id;
-        //document.getElementById('roomProfilePicForm').getElementsByTagName('input')[0].value = room.id;
+        //
         myUL = document.getElementById('myUL');
         myUL.innerHTML = '';
 
@@ -53,7 +53,9 @@ user.rooms.forEach(room => {
             {
                 count = count+1;
                 myUL.innerHTML +=  `<li id="${member}" class="list-group-item">
-                                    
+                                        <div class="img-cropper-small">
+                                            <img src="/profilePics/icon.png" alt="user">
+                                        </div>
                                     <i style="position: absolute;left: 52px;top: 43px;color: #22ff22;"class="fa fa-circle" aria-hidden="true"></i>
                                     ${user.userInfo[member].name}
                                 </li>`;
@@ -61,7 +63,9 @@ user.rooms.forEach(room => {
             else
             {
                 myUL.innerHTML +=  `<li id="${member}" class="list-group-item">
-                                    
+                                        <div class="img-cropper-small">
+                                            <img src="/profilePics/icon.png" alt="user">
+                                        </div>
                                     <i style="position: absolute;left: 52px;top: 43px;color: red;"class="fa fa-circle" aria-hidden="true"></i>
                                     ${user.userInfo[member].name}
                                 </li>`;

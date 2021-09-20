@@ -81,8 +81,6 @@ app.use(function (req, res, next) {
 app.use('/', require('./routes/index.js'));
 app.use('/users', require('./routes/users.js'));
 
-//const botName = 'YouChat Bot';
-
 // Socket io
 const onlineUsers = {};
 
@@ -201,7 +199,6 @@ io.on('connection', socket => {
                 break;
             }
         }
-  
          // console.log('offline',onlineUsers);
     })
 });

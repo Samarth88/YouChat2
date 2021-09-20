@@ -21,7 +21,6 @@ const RoomSchema = new mongoose.Schema({
     }],
     default: []
   },
-  
   createdBy: {
       type: String,
       required: true
@@ -30,7 +29,6 @@ const RoomSchema = new mongoose.Schema({
     type: Date,
     default: new Date()
   }
-  
 });
 
 const Room = mongoose.model('Rooms', RoomSchema);

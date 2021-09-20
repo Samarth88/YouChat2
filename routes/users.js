@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const passport = require('passport');
-//const multer = require('multer');
+const multer = require('multer');
 const path = require('path');
-//const fs = require('fs');
+const fs = require('fs');
 const http = require('https');
 
 
@@ -61,9 +61,9 @@ router.post('/register', (req, res, next) => {
         newUser.email = email;
         newUser.password = password;
         newUser.authWith = 'local';
-        //newUser.profilePicURL = '/profilePics/'+newUser.id;
+        //
 
-        //download(`https://ui-avatars.com/api/?name=${name}&background=random&length=1&size=128`, path.join(__dirname,'..','profilePics',newUser.id),(err)=>{ if(err) console.log(err) });
+        //
 
         bcrypt.genSalt(10, (err, salt) => {
           bcrypt.hash(newUser.password, salt, (err, hash) => {
@@ -121,6 +121,14 @@ router.post('/updateRoomName' , (req,res) => {
       }
     });
 })
+
+
+// Google Login
+router.get('/auth/google', passport.authenticate('google', { scope: ['profile','email'] }))
+
+// Google callback
+router.get( '/auth/google/callback', passport.authenticate('google', { failureRedirect: '/', successRedirect: '/dashboard' }))
+
 
 // Logout
 router.get('/logout', (req, res) => {

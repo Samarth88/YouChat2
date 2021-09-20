@@ -71,7 +71,7 @@ socket.on('user-joined' , (data) => {
     {
         document.getElementById('myUL').innerHTML +=  `<li id="${data.userId}" class="list-group-item">
                                                         <div class="img-cropper-small">
-                                                            <img src="/icon.png" alt="user">
+                                                            <img src="/profilePics/icon.png" alt="user">
                                                         </div>
                                                         <i style="position: absolute;left: 52px;top: 43px;color: #22ff22;"class="fa fa-circle" aria-hidden="true"></i>
                                                         ${data.userName}

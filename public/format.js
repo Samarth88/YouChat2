@@ -8,13 +8,13 @@ function editProfileName()
 
 function cancelEdit()
 {
-    //document.getElementById('output').src = `/profilePics/${user.id}`;
+    //
     document.getElementById('profileName').value = user.name;
 
     document.getElementById('profileName').disabled = true;
 
-    //document.getElementById('savePic').style.display = 'none';
-    //document.getElementById('editPic').style.display = 'block'
+    //
+    //
     document.getElementById('saveName').style.display = 'none';
     document.getElementById('editName').style.display = 'block'
 }
@@ -28,8 +28,8 @@ var loadFile = function(event) {
     };
     reader.readAsDataURL(event.target.files[0]);
 
-    //document.getElementById('editPic').style.display = 'none';
-    //document.getElementById('savePic').style.display = 'block';
+    //
+    //
 };
 
 function editRoomProfileName()
@@ -42,14 +42,14 @@ function editRoomProfileName()
 
 function cancelRoomEdit()
 {
-    //document.getElementById('outputRoom').src = `/roomProfilePics/${currentRoom}`;
+    //
     elem = document.getElementById('roomProfileName')
     elem.value = elem.dataset.realname;
 
     document.getElementById('roomProfileName').disabled = true;
 
-    //document.getElementById('saveRoomPic').style.display = 'none';
-    //document.getElementById('editRoomPic').style.display = 'block'
+    //
+    //
     document.getElementById('saveRoomName').style.display = 'none';
     document.getElementById('editRoomName').style.display = 'block'
 }
@@ -63,8 +63,8 @@ var loadRoomFile = function(event) {
     };
     reader.readAsDataURL(event.target.files[0]);
 
-    //document.getElementById('editRoomPic').style.display = 'none';
-    //document.getElementById('saveRoomPic').style.display = 'block';
+    //
+    //
 };
 
 
