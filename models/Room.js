@@ -28,7 +28,10 @@ const RoomSchema = new mongoose.Schema({
   date: {
     type: Date,
     default: new Date()
-  }
+  },
+  roomProfilePicURL: {
+    type:String
+   },
 });
 
 const Room = mongoose.model('Rooms', RoomSchema);

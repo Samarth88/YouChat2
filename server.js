@@ -77,6 +77,44 @@ app.use(function (req, res, next) {
     next();
 });
 
+
+// ProfilePics
+app.use('/profilePics/:id' , ensureAuthenticated, (req,res,next) => {
+    filePath = path.join(__dirname,'profilePics',req.params.id);
+  
+    if(fs.existsSync(filePath))
+    {
+      res.sendFile(filePath);
+    }
+    else
+    {
+      res.sendFile(path.join(__dirname,'profilePics','icon.png'));
+    }
+})
+  
+// Room Profile Pics
+app.use('/roomProfilePics/:id' , ensureAuthenticated, (req,res,next) => {
+    filePath = path.join(__dirname,'roomProfilePics',req.params.id);
+
+    if( req.user.rooms.includes(req.params.id.replace('.png', '')) )
+    {
+        if(fs.existsSync(filePath))
+        {
+        res.sendFile(filePath);
+        }
+        else
+        {
+        res.sendFile(path.join(__dirname,'roomProfilePics','default.png'));
+        }
+    }
+    else
+    {
+        console.log('user no present in room');
+        res.status(401);
+        res.end();
+    }
+})
+
 // Routes
 app.use('/', require('./routes/index.js'));
 app.use('/users', require('./routes/users.js'));
@@ -141,21 +179,21 @@ io.on('connection', socket => {
             }
         });
   
-    User.updateOne({_id: data.id},
-        {$pull: { rooms: data.room}},
-        (err, docs) => {
-            if (err) {
-                console.log(err)
-            }
-            else {
-                // console.log("Updated Docs : ", docs);
-            }
-    });
-  
-    data.Date = newMessage.Date;
-    socket.broadcast.to(data.room).emit('user-left' , data);
-    console.log(`${data.name} left ${data.room}`);
-})
+        User.updateOne({_id: data.id},
+            {$pull: { rooms: data.room}},
+            (err, docs) => {
+                if (err) {
+                    console.log(err)
+                }
+                else {
+                    // console.log("Updated Docs : ", docs);
+                }
+        });
+    
+        data.Date = newMessage.Date;
+        socket.broadcast.to(data.room).emit('user-left' , data);
+        console.log(`${data.name} left ${data.room}`);
+    })
   
     socket.on('sent-message' , (data) => {
   
@@ -206,4 +244,4 @@ io.on('connection', socket => {
 
 const PORT = process.env.PORT || 3000;
 
-server.listen(PORT, () => console.log(`Server running on port on ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}/`));

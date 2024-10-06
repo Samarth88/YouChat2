@@ -51,6 +51,9 @@
                 <div style="display: flex; justify-content: space-between;" class="bg-gray px-4 py-2 bg-light">
                     <button style="padding: 0; box-shadow: none;" class="btn" onclick="cancelEdit()" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample2" aria-controls="offcanvasExample2">
                         <div style="display: flex;align-items: center;">
+                            <div class="img-cropper-small">
+                                <img src="<%= user.profilePicURL %> " alt="">
+                            </div>
                             <p class="h5 ml-3 mb-0 py-1"><%= user.name %></p>
                         </div>
                     </button>
@@ -79,7 +82,9 @@
                                     <div id="<%= room.id %>">
                                         <a href="#" class="list-group-item list-group-item-action list-group-item-light rounded-0">
                                             <div class="media">
-
+                                                <div class="img-cropper-small">
+                                                    <img src="<%= room.roomProfilePicURL %>" alt="room">
+                                                </div>
                                                 <div class="media-body ml-4">
                                                     <div class="d-flex align-items-center justify-content-between mb-1">
                                                         <h5 class="mb-0"><%=room.name%></h5><small class="small"><%= formatDate(lastMessage.Date,'roomlist') %> </small>
@@ -93,7 +98,9 @@
                                     <div id="<%= room.id %>">
                                         <a href="#" class="list-group-item list-group-item-action list-group-item-light rounded-0">
                                             <div class="media">
-
+                                                <div class="img-cropper-small">
+                                                    <img src="<%= room.roomProfilePicURL %>" alt="user">
+                                                </div>
                                                 <div class="media-body ml-4">
                                                     <div class="d-flex align-items-center justify-content-between mb-1">
                                                         <h5 class="mb-0"><%=room.name%></h5><small class="small"><%= formatDate(lastMessage.Date,'roomlist') %> </small>
@@ -117,7 +124,9 @@
             <div id="topBarChatBox" class="bg-gray px-4 py-2 bg-light" style="display: none;">
                 <button style="width: 100%;border: none;background: #f8f9fa !important;" type="button" onclick="cancelRoomEdit()" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample" aria-controls="offcanvasExample">
                     <div style="display: flex;" id="roomNameContainer">
-
+                        <div class="img-cropper-small">
+                            <img src="" alt="room">
+                        </div>
                         <div style="margin-left: 15px;">
                             <div style="text-align: left;" id="roomName" class="h5 mb-0" ></div>
                             <small><span></span> member | <span></span> online</small>
@@ -138,7 +147,9 @@
                             <div class="media w-50 ml-auto mb-3"><div class="media-body"><div class="bg-primary rounded py-2 px-3 mb-2"><p class="text-small mb-0 text-white"><%= message.msg %> </p></div><p class="small text-muted"><%= formatDate(message.Date) %></p></div></div>
                         <% }else{ %>
                             <div class="media w-50 mb-3">
-                                
+                                <div class="img-cropper-small">
+                                    <img src="/profilePics/<%=message.userSent%>.png">
+                                </div>
                                 <div class="media-body ml-3">
                                     <p style="margin-bottom: 0;color: #3a6d99;"><%=userInfo[message.userSent].name%></p>
                                     <div class="bg-light rounded py-2 px-3 mb-2">
@@ -171,7 +182,7 @@
         </div>
     </div>
 </div>
-  
+
 <!-- Right modal -->
 <div class="offcanvas offcanvas-end" data-bs-scroll="false" data-bs-backdrop="true" tabindex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
     <div class="offcanvas-header">
@@ -179,6 +190,27 @@
         <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close" onclick="cancelRoomEdit()"></button>
     </div>
     <div id="roomDescription" class="offcanvas-body">
+        <div>
+            <form id="roomProfilePicForm" action="/users/updateRoomProfilePic" method="POST" enctype="multipart/form-data">
+                <input type="text" name="id" class="form-control" value="" hidden/>
+                <div style="display: flex;flex-direction: column; align-items: center;" class="form-group mb-0">
+                    <div class="img-cropper-big">
+                        <img id="outputRoom" src="" alt="room">
+                        <h5 style="text-align: center;display: none;">Click to select photo</h5>
+                    </div>
+                    <label class="mb-0" for="roomProfilePic">
+                        <div id="editRoomPic">
+                            <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+                            Edit
+                        </div>
+                    </label>
+                    <input type="file" id="roomProfilePic" name="roomProfilePic" class="form-control" accept="image/*" onchange="loadRoomFile(event)" hidden/>
+                </div>
+                <button id="saveRoomPic" style="display: none;margin: auto;" type="submit" class="btn">
+                    <img style="width: 40px;" src="/check.png" alt="">
+                </button>
+            </form>
+        </div>
 
         <div>
             <form id="roomNameForm" action="/users/updateRoomName" method="POST">
@@ -230,6 +262,26 @@
         <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close" onclick="cancelEdit()"></button>
     </div>
     <div class="offcanvas-body">
+        <div>
+            <form id="profilePicForm" action="/users/updateProfilePic" method="POST" enctype="multipart/form-data">
+                <div style="display: flex;flex-direction: column; align-items: center;" class="form-group mb-0">
+                    <div class="img-cropper-big">
+                        <img id="output" src="<%= user.profilePicURL %>" alt="">
+                        <h5 style="text-align: center;display: none;">Click to select photo</h5>
+                    </div>
+                    <label class="mb-0" for="profilePic">
+                        <div id="editPic">
+                            <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+                            Edit
+                        </div>
+                    </label>
+                    <input type="file" id="profilePic" name="profilePic" class="form-control" accept="image/*" onchange="loadFile(event)" hidden/>
+                </div>
+                <button id="savePic" style="display: none;margin: auto;" type="submit" class="btn">
+                    <img style="width: 40px;" src="/check.png" alt="">
+                </button>
+            </form>
+        </div>
 
         <div>
             <form id="profileNameForm" action="/users/updateProfileName" method="POST">

@@ -12,9 +12,9 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  //profilePicURL: {
-  //  type:String
-  //},
+  profilePicURL: {
+   type:String
+  },
   rooms: {
     type: [String],
     default: []

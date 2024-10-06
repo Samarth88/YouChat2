@@ -71,7 +71,7 @@ socket.on('user-joined' , (data) => {
     {
         document.getElementById('myUL').innerHTML +=  `<li id="${data.userId}" class="list-group-item">
                                                         <div class="img-cropper-small">
-                                                            <img src="/profilePics/icon.png" alt="user">
+                                                            <img src="/profilePics/${data.userId}.png" alt="user">
                                                         </div>
                                                         <i style="position: absolute;left: 52px;top: 43px;color: #22ff22;"class="fa fa-circle" aria-hidden="true"></i>
                                                         ${data.userName}
@@ -130,7 +130,9 @@ socket.on('message' , (data) => {
     displayMessage = shortenMessage(`${user.userInfo[data.message.userSent].name}: ${data.message.msg}`);
 
     chatBox.innerHTML +=`<div class="media w-50 mb-3">
-                        
+                            <div class="img-cropper-small">
+                                <img src="/profilePics/${data.message.userSent}.png" alt="user">
+                            </div>
                             <div class="media-body ml-3">
                                 <p style="margin-bottom: 0;color: #3a6d99;">${user.userInfo[data.message.userSent].name}</p>
                                 <div class="bg-light rounded py-2 px-3 mb-2">
